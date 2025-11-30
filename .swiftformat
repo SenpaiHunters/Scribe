@@ -1,0 +1,125 @@
+# Version
+--swiftversion 6.0
+
+# Basic Formatting
+--indent 4
+--maxwidth 120
+--linebreaks lf
+--trimwhitespace always
+--smarttabs enabled
+--tabwidth unspecified
+--xcodeindentation enabled
+
+# Braces and Spacing
+--allman false
+--emptybraces no-space
+--elseposition same-line
+--guardelse auto
+--operatorfunc spaced
+--ranges spaced
+--nospaceoperators ...
+--nowrapoperators 
+--enable spaceAroundComments
+--enable spaceInsideComments
+--enable spaceInsideBrackets
+--enable braces
+
+# Wrapping
+--wraparguments before-first
+--wrapcollections before-first
+--wrapconditions after-first
+--wrapparameters before-first
+--wrapreturntype preserve
+--wrapenumcases always
+--wraptypealiases preserve
+--enable wrapEnumCases
+--enable wrapSwitchCases
+--disable wrapMultilineStatementBraces
+
+# Numbers and Literals
+--binarygrouping 4,8
+--decimalgrouping 3,6
+--fractiongrouping disabled
+--hexgrouping 4,8
+--octalgrouping 4,8
+--hexliteralcase uppercase
+--exponentcase lowercase
+--exponentgrouping disabled
+--assetliterals visual-width
+
+# Code Style
+--acronyms ID,URL,UUID
+--anonymousforeach convert
+--closingparen balanced
+--closurevoid preserve
+--commas inline
+--conflictmarkers reject
+--fragment false
+--onelineforeach ignore
+--patternlet hoist
+--semicolons inline
+--shortoptionals always
+--someany true
+--voidtype tuple
+--yodaswap always
+
+# Access Control and Modifiers
+--modifierorder public,private,fileprivate,internal,final,override,static,lazy,weak,unowned,mutating,nonmutating,convenience,required,indirect,isolated,nonisolated
+
+# Organization
+--organizetypes actor,class,enum,struct
+--enumnamespaces always
+--importgrouping testable-last
+
+# Marks and Documentation
+--beforemarks 
+--categorymark "MARK: %c"
+--extensionmark "MARK: - %t + %c"
+--groupedextension "MARK: %c"
+--typemark "MARK: - %t"
+--lineaftermarks true
+--markcategories true
+--markextensions always
+--marktypes always
+--enable markTypes
+--doccomments before-declarations
+--header preserve
+
+# Thresholds
+--classthreshold 0
+--enumthreshold 0
+--extensionlength 0
+--structthreshold 0
+
+# Attributes
+--funcattributes preserve
+--typeattributes preserve
+--varattributes preserve
+
+# Code Cleanup
+--redundanttype inferred
+--self remove
+--stripunusedargs closure-only
+--typeblanklines remove
+
+# Additional Rules
+--enable isEmpty
+--enable blankLinesBetweenScopes
+--enable consecutiveSpaces
+--enable duplicateImports
+--enable redundantParens
+--enable redundantSelf
+--enable redundantReturn
+--enable redundantGet
+--enable redundantFileprivate
+--enable redundantRawValues
+--enable redundantLetError
+--enable redundantPattern
+--enable redundantVoidReturnType
+--enable sortImports
+--enable strongifiedSelf
+--enable todos
+--enable trailingSpace
+--enable void
+--enable unusedArguments
+--enable indent
