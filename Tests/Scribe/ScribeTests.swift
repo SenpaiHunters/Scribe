@@ -135,6 +135,33 @@ final class ScribeTests: XCTestCase {
         XCTAssertNotNil(capture.message)
         XCTAssertTrue(capture.message?.contains("Sink test message") ?? false)
     }
+    
+    func testStreams() throws {
+        let expectation = XCTestExpectation(description: "Sink received log")
+        
+        final class MessageCapture: @unchecked Sendable {
+            var message: String?
+        }
+        let capture = MessageCapture()
+
+        Task {
+            for await message in Log.logger.stream() {
+                capture.message = message
+                expectation.fulfill()
+            }
+        }
+        
+        Task {
+            // Wait for the stream to start
+            try? await Task.sleep(for: .milliseconds(500))
+
+            Log.info("Sink test message")
+        }
+        
+        wait(for: [expectation], timeout: 2.0)
+        XCTAssertNotNil(capture.message)
+        XCTAssertTrue(capture.message?.contains("Sink test message") ?? false)
+    }
 
     func testCategoryFiltering() throws {
         let allowedExpectation = XCTestExpectation(description: "Allowed category logged")

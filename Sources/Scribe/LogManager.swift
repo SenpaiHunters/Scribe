@@ -153,7 +153,8 @@ public final class LogManager: @unchecked Sendable {
     // State protected by logQueue
     private var _minimumLevel: LogLevel
     private var _configuration: LogConfiguration
-    private var sinks: [(id: SinkID, handler: @Sendable (String) -> ())] = []
+    private var sinks: [SinkID: @Sendable (String) -> ()] = [:]
+    private var streamContinuations: [UUID: AsyncStream<String>.Continuation] = [:]
 
     // Serial queue for thread-safe state access
     private let logQueue: DispatchQueue
@@ -245,10 +246,10 @@ public final class LogManager: @unchecked Sendable {
     /// - Parameter sink: Closure called with each formatted log line.
     /// - Returns: A `SinkID` that can be used to remove this specific sink later.
     @discardableResult
-    public func addSink(_ sink: @Sendable @escaping (String) -> ()) -> SinkID {
+    public func addSink(_ callback: @Sendable @escaping (String) -> ()) -> SinkID {
         let sinkID = SinkID()
         logQueue.async {
-            self.sinks.append((id: sinkID, handler: sink))
+            self.sinks[sinkID] = callback
         }
         return sinkID
     }
@@ -258,7 +259,7 @@ public final class LogManager: @unchecked Sendable {
     /// - Parameter id: The `SinkID` returned when the sink was added.
     public func removeSink(_ id: SinkID) {
         logQueue.async {
-            self.sinks.removeAll { $0.id == id }
+            self.sinks[id] = nil
         }
     }
 
@@ -272,6 +273,28 @@ public final class LogManager: @unchecked Sendable {
     /// The number of currently registered sinks.
     public var sinkCount: Int {
         logQueue.sync { sinks.count }
+    }
+    
+    // MARK: - Streaming
+
+    /// Creates and returns a stream to recieve formatted log messages.
+    /// 
+    /// Similar to sinks, these are useful for capturing logs in tests, writing to files, or forwarding to remote services.
+    /// - Returns: An AsyncStream that will stream formatted log messages.
+    public func stream() -> AsyncStream<String> {
+        AsyncStream { continuation in
+            let id = UUID()
+            
+            logQueue.async {
+                self.streamContinuations[id] = continuation
+            }
+            
+            continuation.onTermination = { @Sendable _ in
+                self.logQueue.async {
+                    self.streamContinuations.removeValue(forKey: id)
+                }
+            }
+        }
     }
 
     /// The number of cached `Logger` instances keyed by category.
@@ -367,9 +390,17 @@ public final class LogManager: @unchecked Sendable {
                 logger.log("\(formatted, privacy: .public)")
             }
 
-            for (_, handler) in self.sinks {
-                handler(formatted)
-            }
+            self.dispatch(formatted)
+        }
+    }
+    
+    private func dispatch(_ message: String) {
+        for handler in sinks.values {
+            handler(message)
+        }
+        
+        for continuation in streamContinuations.values {
+            continuation.yield(message)
         }
     }
 
