@@ -259,16 +259,24 @@ public final class LogManager: @unchecked Sendable {
                 if let tsComponent {
                     parts.append(tsComponent)
                 }
+
                 if cfg.includeEmoji {
                     parts.append(level.emoji)
                 }
+
                 if cfg.includeShortCode {
                     parts.append("[\(level.shortCode)]")
                 }
+
                 parts.append("[\(category.name)]")
                 parts.append(message)
-                let fileName = (file as NSString).lastPathComponent
-                formatted = "\(parts.joined(separator: " ")) — \(fileName):\(line)"
+
+                if cfg.includeFileAndLineNumber {
+                    let fileName = (file as NSString).lastPathComponent
+                    parts.append("— \(fileName):\(line)")
+                }
+                
+                formatted = parts.joined(separator: " ")
             }
 
             switch level.osLogType {

@@ -32,6 +32,11 @@ public struct LogConfiguration: Sendable {
     ///
     /// Only used by the built-in formatter.
     public var includeShortCode: Bool
+    
+    /// Whether to include the file and line number in the format: [file]:[line number].
+    ///
+    /// Only used by the built-in formatter.
+    public var includeFileAndLineNumber: Bool
 
     /// Maximum number of cached auto-generated `Logger` instances (e.g., categories from `#fileID`). `nil` means
     /// unbounded. Default is 100.
@@ -67,6 +72,7 @@ public struct LogConfiguration: Sendable {
         includeTimestamp: Bool = true,
         includeEmoji: Bool = true,
         includeShortCode: Bool = false,
+        includeFileAndLineNumber: Bool = true,
         autoLoggerCacheLimit: Int? = 100,
         dateFormat: String = "yyyy-MM-dd HH:mm:ss.SSSZ"
     ) {
@@ -75,6 +81,7 @@ public struct LogConfiguration: Sendable {
         self.includeTimestamp = includeTimestamp
         self.includeEmoji = includeEmoji
         self.includeShortCode = includeShortCode
+        self.includeFileAndLineNumber = includeFileAndLineNumber
         self.autoLoggerCacheLimit = autoLoggerCacheLimit
         self.dateFormat = dateFormat
     }
@@ -88,21 +95,19 @@ public struct LogConfiguration: Sendable {
     ///   - formatter: Custom formatter closure used to build the final log line.
     ///   - autoLoggerCacheLimit: Maximum cached auto-generated `Logger` instances. Pass `nil` for no limit. Default is
     /// 100.
-    ///   - dateFormat: Timestamp format string supplied for convenience to formatter users. Default is
-    /// `"yyyy-MM-dd HH:mm:ss.SSSZ"`.
     public init(
         enabledCategories: Set<LogCategory>? = nil,
         formatter: @escaping @Sendable (FormatterContext) -> String,
         autoLoggerCacheLimit: Int? = 100,
-        dateFormat: String = "yyyy-MM-dd HH:mm:ss.SSSZ"
     ) {
         self.enabledCategories = enabledCategories
         self.formatter = formatter
         self.includeTimestamp = true
         self.includeEmoji = true
         self.includeShortCode = false
+        self.includeFileAndLineNumber = true
         self.autoLoggerCacheLimit = autoLoggerCacheLimit
-        self.dateFormat = dateFormat
+        self.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ"
     }
 
     /// Default configuration with timestamps enabled and all categories allowed.
