@@ -13,8 +13,8 @@ import Foundation
 /// Each method automatically captures source location metadata (file, function, line).
 ///
 /// ```swift
-/// Log.info("User signed in", category: "Auth")
-/// Log.error("Failed to fetch data", category: "Network")
+/// Log.info("User signed in", category: .init("Auth"))
+/// Log.error("Failed to fetch data", category: .init("Network"))
 /// Log.debug("Processing item \(item.id)")
 /// ```
 ///
@@ -37,7 +37,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func debug(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -57,7 +57,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func trace(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -75,7 +75,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func print(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -95,7 +95,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func info(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -113,7 +113,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func notice(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -133,7 +133,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func warn(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -151,7 +151,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func error(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -169,7 +169,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func fatal(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -189,7 +189,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func success(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -207,7 +207,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func done(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -227,7 +227,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func network(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -245,7 +245,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func api(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -265,7 +265,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func security(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -283,7 +283,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func auth(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -303,7 +303,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func metric(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -321,7 +321,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func analytics(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -341,7 +341,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func ui(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -359,7 +359,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func user(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -379,7 +379,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func database(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line
@@ -397,7 +397,7 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func storage(
         _ message: String,
-        category: String = #fileID,
+        category: LogCategory = .init(#fileID),
         function: String = #function,
         file: String = #file,
         line: Int = #line

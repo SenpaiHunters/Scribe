@@ -22,12 +22,20 @@ import os
 /// ```
 public struct LogConfiguration: Sendable {
     /// Categories to include in logging output. `nil` allows all categories.
-    public var enabledCategories: Set<String>?
+    public var enabledCategories: Set<LogCategory>?
     
     /// Custom formatter closure for complete control over log line format.
-    ///
-    /// Parameters: (level, category, message, file, line, timestamp)
-    public var formatter: (@Sendable (LogLevel, String, String, String, Int, Date) -> String)?
+    public var formatter: (@Sendable (FormatterContext) -> String)?
+    
+    /// Provides all contextual information needed by a custom log formatter.
+    public struct FormatterContext: Sendable {
+        public let level: LogLevel
+        public let category: LogCategory
+        public let message: String
+        public let file: String
+        public let line: Int
+        public let timestamp: Date
+    }
     
     /// Whether to include timestamps in log output. Default is `true`.
     public var includeTimestamp: Bool
@@ -43,8 +51,8 @@ public struct LogConfiguration: Sendable {
     ///   - includeTimestamp: Whether to include timestamps. Default is `true`.
     ///   - dateFormat: Timestamp format string. Default is `"yyyy-MM-dd HH:mm:ss.SSSZ"`.
     public init(
-        enabledCategories: Set<String>? = nil,
-        formatter: (@Sendable (LogLevel, String, String, String, Int, Date) -> String)? = nil,
+        enabledCategories: Set<LogCategory>? = nil,
+        formatter: (@Sendable (FormatterContext) -> String)? = nil,
         includeTimestamp: Bool = true,
         dateFormat: String = "yyyy-MM-dd HH:mm:ss.SSSZ"
     ) {
@@ -87,8 +95,9 @@ public struct SinkID: Hashable, Sendable {
 public final class LogManager: @unchecked Sendable {
     /// Shared singleton instance.
     public static let shared = LogManager()
-
-    private let logger: Logger
+    private let subsystem: String
+    private var loggersByCategory: [LogCategory: Logger] = [:]
+    
     private let dateFormatter: DateFormatter
 
     // State protected by logQueue
@@ -100,10 +109,7 @@ public final class LogManager: @unchecked Sendable {
     private let logQueue: DispatchQueue
 
     private init() {
-        let subsystem = Bundle.main.bundleIdentifier ?? "com.kamidevs.scribe"
-        let category = "Scribe"
-        logger = Logger(subsystem: subsystem, category: category)
-
+        subsystem = Bundle.main.bundleIdentifier ?? "com.kamidevs.scribe"
         dateFormatter = DateFormatter()
 
         _configuration = .default
@@ -226,12 +232,13 @@ public final class LogManager: @unchecked Sendable {
     public func log(
         _ message: String,
         level: LogLevel,
-        category: String,
+        category: LogCategory,
         file: String = #file,
         function: String = #function,
         line: Int = #line
     ) {
         logQueue.async {
+            let logger = self.getLogger(for: category)
             let cfg = self._configuration
             let minLevel = self._minimumLevel
 
@@ -243,29 +250,48 @@ public final class LogManager: @unchecked Sendable {
             let now = Date()
             let formatted: String
             if let custom = cfg.formatter {
-                formatted = custom(level, category, message, file, line, now)
+                formatted = custom(
+                    LogConfiguration.FormatterContext(
+                        level: level,
+                        category: category,
+                        message: message,
+                        file: file,
+                        line: line,
+                        timestamp: now
+                    )
+                )
             } else {
                 let ts = cfg.includeTimestamp ? (self.dateFormatter.string(from: now) + " ") : ""
                 let fileName = (file as NSString).lastPathComponent
-                formatted = "\(ts)\(level.emoji) [\(level.shortCode)] [\(category)] \(message) — \(fileName):\(line)"
+                formatted = "\(ts)\(level.emoji) [\(level.shortCode)] [\(category.name)] \(message) — \(fileName):\(line)"
             }
 
             switch level.osLogType {
             case .fault:
-                self.logger.fault("\(formatted, privacy: .public)")
+                logger.fault("\(formatted, privacy: .public)")
             case .error:
-                self.logger.error("\(formatted, privacy: .public)")
+                logger.error("\(formatted, privacy: .public)")
             case .debug:
-                self.logger.debug("\(formatted, privacy: .public)")
+                logger.debug("\(formatted, privacy: .public)")
             case .info:
-                self.logger.info("\(formatted, privacy: .public)")
+                logger.info("\(formatted, privacy: .public)")
             default:
-                self.logger.log("\(formatted, privacy: .public)")
+                logger.log("\(formatted, privacy: .public)")
             }
 
             for (_, handler) in self.sinks {
                 handler(formatted)
             }
         }
+    }
+    
+    private func getLogger(for category: LogCategory) -> Logger {
+        if let logger = loggersByCategory[category] {
+            return logger
+        }
+        
+        let logger = Logger(subsystem: subsystem, category: category.name)
+        loggersByCategory[category] = logger
+        return logger
     }
 }

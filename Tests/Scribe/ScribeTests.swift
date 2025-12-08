@@ -81,14 +81,14 @@ final class ScribeTests: XCTestCase {
     func testConfiguration() throws {
         // Test configuration changes with actual API
         let config = LogConfiguration(
-            enabledCategories: ["TestCategory"],
+            enabledCategories: [.test],
             includeTimestamp: true,
             dateFormat: "HH:mm:ss"
         )
 
         Log.logger.setConfiguration(config)
 
-        Log.info("Test message with new configuration", category: "TestCategory")
+        Log.info("Test message with new configuration", category: .test)
 
         XCTAssertTrue(true)
     }
@@ -97,14 +97,14 @@ final class ScribeTests: XCTestCase {
         let expectation = XCTestExpectation(description: "Custom formatter called")
         
         let config = LogConfiguration(
-            formatter: { level, category, message, file, line, date in
+            formatter: { context in
                 expectation.fulfill()
-                return "[\(level.shortCode)] \(category): \(message)"
+                return "[\(context.level.shortCode)] \(context.category): \(context.message)"
             }
         )
         
         Log.logger.setConfiguration(config)
-        Log.info("Test with custom formatter", category: "Test")
+        Log.info("Test with custom formatter", category: .test)
         
         wait(for: [expectation], timeout: 2.0)
     }
@@ -143,11 +143,11 @@ final class ScribeTests: XCTestCase {
             }
         }
         
-        let config = LogConfiguration(enabledCategories: ["AllowedCategory"])
+        let config = LogConfiguration(enabledCategories: [.testAllowed])
         Log.logger.setConfiguration(config)
         
-        Log.info("This should appear", category: "AllowedCategory")
-        Log.info("This should not appear", category: "BlockedCategory")
+        Log.info("This should appear", category: .testAllowed)
+        Log.info("This should not appear", category: .testBlocked)
         
         wait(for: [allowedExpectation, blockedExpectation], timeout: 2.0)
     }
@@ -196,4 +196,11 @@ final class ScribeTests: XCTestCase {
         XCTAssertTrue(networkLevels.contains(.api))
         XCTAssertEqual(networkLevels.count, 2)
     }
+}
+
+extension LogCategory {
+    static let test = LogCategory("TestCategory")
+    
+    static let testAllowed = LogCategory("AllowedCategory")
+    static let testBlocked = LogCategory("BlockedCategory")
 }
