@@ -2,8 +2,9 @@ import XCTest
 
 @testable import Scribe
 
+// MARK: - ScribeTests
+
 final class ScribeTests: XCTestCase {
-    
     override func setUp() {
         super.setUp()
         // Reset to default state before each test
@@ -11,7 +12,7 @@ final class ScribeTests: XCTestCase {
         Log.logger.setConfiguration(.default)
         Log.logger.removeAllSinks()
     }
-    
+
     func testBasicLogging() throws {
         // Test basic logging functionality
         Log.info("Test info message")
@@ -92,48 +93,48 @@ final class ScribeTests: XCTestCase {
 
         XCTAssertTrue(true)
     }
-    
+
     func testCustomFormatter() throws {
         let expectation = XCTestExpectation(description: "Custom formatter called")
-        
+
         let config = LogConfiguration(
             formatter: { context in
                 expectation.fulfill()
                 return "[\(context.level.shortCode)] \(context.category): \(context.message)"
             }
         )
-        
+
         Log.logger.setConfiguration(config)
         Log.info("Test with custom formatter", category: .test)
-        
+
         wait(for: [expectation], timeout: 2.0)
     }
-    
+
     func testSinks() throws {
         let expectation = XCTestExpectation(description: "Sink received log")
-        
+
         final class MessageCapture: @unchecked Sendable {
             var message: String?
         }
         let capture = MessageCapture()
-        
+
         Log.logger.addSink { message in
             capture.message = message
             expectation.fulfill()
         }
-        
+
         Log.info("Sink test message")
-        
+
         wait(for: [expectation], timeout: 2.0)
         XCTAssertNotNil(capture.message)
         XCTAssertTrue(capture.message?.contains("Sink test message") ?? false)
     }
-    
+
     func testCategoryFiltering() throws {
         let allowedExpectation = XCTestExpectation(description: "Allowed category logged")
         let blockedExpectation = XCTestExpectation(description: "Blocked category not logged")
         blockedExpectation.isInverted = true
-        
+
         Log.logger.addSink { message in
             if message.contains("[AllowedCategory]") {
                 allowedExpectation.fulfill()
@@ -142,16 +143,16 @@ final class ScribeTests: XCTestCase {
                 blockedExpectation.fulfill()
             }
         }
-        
+
         let config = LogConfiguration(enabledCategories: [.testAllowed])
         Log.logger.setConfiguration(config)
-        
+
         Log.info("This should appear", category: .testAllowed)
         Log.info("This should not appear", category: .testBlocked)
-        
+
         wait(for: [allowedExpectation, blockedExpectation], timeout: 2.0)
     }
-    
+
     func testLogLevelProperties() throws {
         // Test LogLevel properties
         XCTAssertEqual(LogLevel.error.emoji, "❌")
@@ -159,38 +160,38 @@ final class ScribeTests: XCTestCase {
         XCTAssertEqual(LogLevel.info.name, "info")
         XCTAssertEqual(LogLevel.network.family, .networking)
     }
-    
+
     func testLogLevelParsing() throws {
         XCTAssertEqual(LogLevel.parse("error"), .error)
         XCTAssertEqual(LogLevel.parse("ERR"), .error)
         XCTAssertEqual(LogLevel.parse("❌"), .error)
         XCTAssertNil(LogLevel.parse("invalid"))
     }
-    
+
     func testLogLevelComparison() throws {
         XCTAssertTrue(LogLevel.error > LogLevel.debug)
         XCTAssertTrue(LogLevel.trace < LogLevel.info)
         XCTAssertTrue(LogLevel.warning >= LogLevel.warning)
     }
-    
+
     func testLogLevelSets() throws {
         XCTAssertTrue(LogLevel.allSevere.contains(.error))
         XCTAssertTrue(LogLevel.allSevere.contains(.fatal))
         XCTAssertFalse(LogLevel.allSevere.contains(.warning))
-        
+
         XCTAssertTrue(LogLevel.allProblems.contains(.warning))
         XCTAssertTrue(LogLevel.allProblems.contains(.error))
-        
+
         XCTAssertTrue(LogLevel.noisyLevels.contains(.trace))
         XCTAssertTrue(LogLevel.noisyLevels.contains(.debug))
     }
-    
+
     func testLogLevelHelpers() throws {
         let infoAndAbove = LogLevel.levels(minimum: .info)
         XCTAssertFalse(infoAndAbove.contains(.debug))
         XCTAssertTrue(infoAndAbove.contains(.info))
         XCTAssertTrue(infoAndAbove.contains(.error))
-        
+
         let networkLevels = LogLevel.levels(in: .networking)
         XCTAssertTrue(networkLevels.contains(.network))
         XCTAssertTrue(networkLevels.contains(.api))
@@ -200,7 +201,7 @@ final class ScribeTests: XCTestCase {
 
 extension LogCategory {
     static let test = LogCategory("TestCategory")
-    
+
     static let testAllowed = LogCategory("AllowedCategory")
     static let testBlocked = LogCategory("BlockedCategory")
 }

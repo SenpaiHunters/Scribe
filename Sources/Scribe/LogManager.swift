@@ -8,6 +8,8 @@
 import Foundation
 import os
 
+// MARK: - LogConfiguration
+
 /// Configuration options for the logging system.
 ///
 /// Use this struct to customize log formatting, category filtering, and timestamp display.
@@ -23,10 +25,10 @@ import os
 public struct LogConfiguration: Sendable {
     /// Categories to include in logging output. `nil` allows all categories.
     public var enabledCategories: Set<LogCategory>?
-    
+
     /// Custom formatter closure for complete control over log line format.
     public var formatter: (@Sendable (FormatterContext) -> String)?
-    
+
     /// Provides all contextual information needed by a custom log formatter.
     public struct FormatterContext: Sendable {
         public let level: LogLevel
@@ -36,10 +38,10 @@ public struct LogConfiguration: Sendable {
         public let line: Int
         public let timestamp: Date
     }
-    
+
     /// Whether to include timestamps in log output. Default is `true`.
     public var includeTimestamp: Bool
-    
+
     /// Date format string for timestamps. Default is `"yyyy-MM-dd HH:mm:ss.SSSZ"`.
     public var dateFormat: String
 
@@ -66,14 +68,18 @@ public struct LogConfiguration: Sendable {
     public static var `default`: LogConfiguration { LogConfiguration() }
 }
 
+// MARK: - SinkID
+
 /// Unique identifier for a registered log sink, used for removal.
 public struct SinkID: Hashable, Sendable {
     fileprivate let id: UUID
-    
+
     fileprivate init() {
-        self.id = UUID()
+        id = UUID()
     }
 }
+
+// MARK: - LogManager
 
 /// Central logging manager that handles log routing, filtering, and output.
 ///
@@ -97,13 +103,13 @@ public final class LogManager: @unchecked Sendable {
     public static let shared = LogManager()
     private let subsystem: String
     private var loggersByCategory: [LogCategory: Logger] = [:]
-    
+
     private let dateFormatter: DateFormatter
 
     // State protected by logQueue
     private var _minimumLevel: LogLevel
     private var _configuration: LogConfiguration
-    private var sinks: [(id: SinkID, handler: @Sendable (String) -> Void)] = []
+    private var sinks: [(id: SinkID, handler: @Sendable (String) -> ())] = []
 
     // Serial queue for thread-safe state access
     private let logQueue: DispatchQueue
@@ -117,11 +123,11 @@ public final class LogManager: @unchecked Sendable {
 
         _minimumLevel = .debug
 
-        logQueue = DispatchQueue(label: "com.kamidevs.scribe.logging", qos: .utility)
+        logQueue = DispatchQueue(label: "\(subsystem).logging", qos: .utility)
     }
 
     // MARK: - Synchronous Accessors
-    
+
     /// The minimum log level threshold. Messages below this level are ignored.
     ///
     /// This property is thread-safe for both reading and writing.
@@ -129,7 +135,7 @@ public final class LogManager: @unchecked Sendable {
         get { logQueue.sync { _minimumLevel } }
         set { logQueue.async { self._minimumLevel = newValue } }
     }
-    
+
     /// Current logging configuration.
     ///
     /// This property is thread-safe for both reading and writing.
@@ -154,7 +160,7 @@ public final class LogManager: @unchecked Sendable {
     /// Retrieves the current configuration asynchronously.
     ///
     /// - Parameter completion: Closure called with the current configuration.
-    public func getConfiguration(_ completion: @escaping @Sendable (LogConfiguration) -> Void) {
+    public func getConfiguration(_ completion: @escaping @Sendable (LogConfiguration) -> ()) {
         logQueue.async {
             completion(self._configuration)
         }
@@ -172,7 +178,7 @@ public final class LogManager: @unchecked Sendable {
     /// Retrieves the current minimum log level asynchronously.
     ///
     /// - Parameter completion: Closure called with the current minimum level.
-    public func getMinimumLevel(_ completion: @escaping @Sendable (LogLevel) -> Void) {
+    public func getMinimumLevel(_ completion: @escaping @Sendable (LogLevel) -> ()) {
         logQueue.async {
             completion(self._minimumLevel)
         }
@@ -187,14 +193,14 @@ public final class LogManager: @unchecked Sendable {
     /// - Parameter sink: Closure called with each formatted log line.
     /// - Returns: A `SinkID` that can be used to remove this specific sink later.
     @discardableResult
-    public func addSink(_ sink: @Sendable @escaping (String) -> Void) -> SinkID {
+    public func addSink(_ sink: @Sendable @escaping (String) -> ()) -> SinkID {
         let sinkID = SinkID()
         logQueue.async {
             self.sinks.append((id: sinkID, handler: sink))
         }
         return sinkID
     }
-    
+
     /// Removes a specific sink by its identifier.
     ///
     /// - Parameter id: The `SinkID` returned when the sink was added.
@@ -210,7 +216,7 @@ public final class LogManager: @unchecked Sendable {
             self.sinks.removeAll()
         }
     }
-    
+
     /// The number of currently registered sinks.
     public var sinkCount: Int {
         logQueue.sync { sinks.count }
@@ -284,12 +290,12 @@ public final class LogManager: @unchecked Sendable {
             }
         }
     }
-    
+
     private func getLogger(for category: LogCategory) -> Logger {
         if let logger = loggersByCategory[category] {
             return logger
         }
-        
+
         let logger = Logger(subsystem: subsystem, category: category.name)
         loggersByCategory[category] = logger
         return logger
