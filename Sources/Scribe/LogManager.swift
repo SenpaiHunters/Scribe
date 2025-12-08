@@ -282,7 +282,7 @@ public final class LogManager: @unchecked Sendable {
     /// Clears all cached `Logger` instances, useful to prevent unbounded growth when using many dynamic categories.
     ///
     /// - Parameter completion: Optional callback invoked after the cache has been cleared.
-    public func clearLoggerCache(completion: (@Sendable () -> Void)? = nil) {
+    public func clearLoggerCache(completion: (@Sendable () -> ())? = nil) {
         logQueue.async {
             self.loggersByCategory.removeAll()
             self.autoLoggerCache.removeAllObjects()
