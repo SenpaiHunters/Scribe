@@ -6,8 +6,8 @@ import PackageDescription
 let package = Package(
     name: "Scribe",
     platforms: [
-        .iOS(.v15),
-        .macOS(.v14),
+        .iOS(.v14),
+        .macOS(.v13),
         .tvOS(.v17),
         .watchOS(.v10),
         .visionOS(.v1)

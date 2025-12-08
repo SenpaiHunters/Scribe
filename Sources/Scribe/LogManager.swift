@@ -8,101 +8,6 @@
 import Foundation
 import os
 
-// MARK: - LogConfiguration
-
-/// Configuration options for the logging system.
-///
-/// Use this struct to customize log formatting, category filtering, and timestamp display.
-///
-/// ```swift
-/// let config = LogConfiguration(
-///     enabledCategories: ["NetworkLayer", "APIService"],
-///     includeTimestamp: true,
-///     dateFormat: "HH:mm:ss"
-/// )
-/// LogManager.shared.setConfiguration(config)
-/// ```
-public struct LogConfiguration: Sendable {
-    /// Categories to include in logging output. `nil` allows all categories.
-    public var enabledCategories: Set<LogCategory>?
-
-    /// Custom formatter closure for complete control over log line format.
-    public var formatter: (@Sendable (FormatterContext) -> String)?
-
-    /// Provides all contextual information needed by a custom log formatter.
-    public struct FormatterContext: Sendable {
-        public let level: LogLevel
-        public let category: LogCategory
-        public let message: String
-        public let file: String
-        public let line: Int
-        public let timestamp: Date
-    }
-
-    /// Whether to include timestamps in log output. Default is `true`.
-    public var includeTimestamp: Bool
-
-    /// Whether to include the level emoji in log output. Default is `true`.
-    public var includeEmoji: Bool
-
-    /// Whether to include the level short code (e.g., `[DBG]`) in log output. Default is `false`.
-    public var includeShortCode: Bool
-
-    /// Maximum number of cached auto-generated `Logger` instances (e.g., categories from `#fileID`). `nil` means
-    /// unbounded. Default is 100.
-    public var autoLoggerCacheLimit: Int?
-
-    /// Date format string for timestamps. Default is `"yyyy-MM-dd HH:mm:ss.SSSZ"`.
-    public var dateFormat: String
-
-    /// Creates a new log configuration.
-    ///
-    /// - Parameters:
-    ///   - enabledCategories: Categories to include. Pass `nil` to allow all categories.
-    ///   - formatter: Custom formatter closure. Pass `nil` to use the default format.
-    ///   - includeTimestamp: Whether to include timestamps. Default is `true`.
-    ///   - includeEmoji: Whether to include the level emoji. Default is `true`.
-    ///   - includeShortCode: Whether to include the level short code. Default is `false`.
-    ///   - autoLoggerCacheLimit: Maximum cached auto-generated `Logger` instances. Pass `nil` for no limit. Default is
-    /// 100.
-    ///   - dateFormat: Timestamp format string. Default is `"yyyy-MM-dd HH:mm:ss.SSSZ"`.
-    public init(
-        enabledCategories: Set<LogCategory>? = nil,
-        formatter: (@Sendable (FormatterContext) -> String)? = nil,
-        includeTimestamp: Bool = true,
-        includeEmoji: Bool = true,
-        includeShortCode: Bool = false,
-        autoLoggerCacheLimit: Int? = 100,
-        dateFormat: String = "yyyy-MM-dd HH:mm:ss.SSSZ"
-    ) {
-        self.enabledCategories = enabledCategories
-        self.formatter = formatter
-        self.includeTimestamp = includeTimestamp
-        self.includeEmoji = includeEmoji
-        self.includeShortCode = includeShortCode
-        self.autoLoggerCacheLimit = autoLoggerCacheLimit
-        self.dateFormat = dateFormat
-    }
-
-    /// Default configuration with timestamps enabled and all categories allowed.
-    public static var `default`: LogConfiguration { LogConfiguration() }
-}
-
-// MARK: - LogSubscription
-
-/// Unique identifier for a registered log subscription.
-///
-/// Used for both sink callbacks and async stream listeners.
-public struct LogSubscription: Hashable, Sendable {
-    fileprivate let id: UUID
-    fileprivate let categories: Set<LogCategory>?
-
-    fileprivate init(categories: Set<LogCategory>?) {
-        id = UUID()
-        self.categories = categories
-    }
-}
-
 // MARK: - LogManager
 
 /// Central logging manager that handles log routing, filtering, and output.
@@ -123,33 +28,13 @@ public struct LogSubscription: Hashable, Sendable {
 /// LogManager.shared.removeSink(sinkID)
 /// ```
 public final class LogManager: @unchecked Sendable {
-    private final class CachedLogger: NSObject {
-        let logger: Logger
-        let key: String
-
-        init(logger: Logger, key: String) {
-            self.logger = logger
-            self.key = key
-        }
-    }
-
-    private final class AutoLoggerCacheDelegate: NSObject, NSCacheDelegate {
-        weak var owner: LogManager?
-
-        func cache(_ cache: NSCache<AnyObject, AnyObject>, willEvictObject obj: Any) {
-            guard let cached = obj as? CachedLogger else { return }
-            owner?.handleAutoEviction(forKey: cached.key)
-        }
-    }
-
     /// Shared singleton instance.
     public static let shared = LogManager()
+
     private let subsystem: String
     private var loggersByCategory: [LogCategory: Logger] = [:]
 
-    private let autoLoggerCache: NSCache<NSString, CachedLogger>
-    private let autoLoggerCacheDelegate: AutoLoggerCacheDelegate
-    private var autoLoggerKeys: Set<String> = []
+    private var autoLoggers: [String: Logger] = [:]
     private var autoLoggerOrder: [String] = []
 
     private let dateFormatter: DateFormatter
@@ -167,9 +52,6 @@ public final class LogManager: @unchecked Sendable {
         subsystem = Bundle.main.bundleIdentifier ?? "com.kamidevs.scribe"
         dateFormatter = DateFormatter()
 
-        autoLoggerCache = NSCache<NSString, CachedLogger>()
-        autoLoggerCacheDelegate = AutoLoggerCacheDelegate()
-
         _configuration = .default
         dateFormatter.dateFormat = _configuration.dateFormat
 
@@ -177,8 +59,6 @@ public final class LogManager: @unchecked Sendable {
 
         logQueue = DispatchQueue(label: "\(subsystem).logging", qos: .utility)
 
-        autoLoggerCacheDelegate.owner = self
-        autoLoggerCache.delegate = autoLoggerCacheDelegate
         applyAutoCacheLimit(_configuration.autoLoggerCacheLimit)
     }
 
@@ -314,7 +194,7 @@ public final class LogManager: @unchecked Sendable {
 
     /// The number of cached `Logger` instances keyed by category.
     public var loggerCacheCount: Int {
-        logQueue.sync { loggersByCategory.count + autoLoggerKeys.count }
+        logQueue.sync { loggersByCategory.count + autoLoggers.count }
     }
 
     /// Clears all cached `Logger` instances, useful to prevent unbounded growth when using many dynamic categories.
@@ -323,8 +203,7 @@ public final class LogManager: @unchecked Sendable {
     public func clearLoggerCache(completion: (@Sendable () -> ())? = nil) {
         logQueue.async {
             self.loggersByCategory.removeAll()
-            self.autoLoggerCache.removeAllObjects()
-            self.autoLoggerKeys.removeAll()
+            self.autoLoggers.removeAll()
             self.autoLoggerOrder.removeAll()
             completion?()
         }
@@ -434,19 +313,17 @@ public final class LogManager: @unchecked Sendable {
         return logger
     }
 
+    /// Returns or creates an auto-generated logger while maintaining LRU eviction.
     private func getAutoLogger(for category: LogCategory) -> Logger {
         let key = category.name
-        let nsKey = key as NSString
 
-        if let cached = autoLoggerCache.object(forKey: nsKey) {
+        if let cached = autoLoggers[key] {
             promoteAutoLoggerKey(key)
-            return cached.logger
+            return cached
         }
 
         let logger = Logger(subsystem: subsystem, category: key)
-        let cached = CachedLogger(logger: logger, key: key)
-        autoLoggerCache.setObject(cached, forKey: nsKey)
-        autoLoggerKeys.insert(key)
+        autoLoggers[key] = logger
         autoLoggerOrder.append(key)
         enforceAutoLoggerLimit(_configuration.autoLoggerCacheLimit)
         return logger
@@ -461,28 +338,18 @@ public final class LogManager: @unchecked Sendable {
 
     private func enforceAutoLoggerLimit(_ limit: Int?) {
         guard let limit else { return }
-        applyAutoCacheLimit(limit)
-        while autoLoggerOrder.count > limit {
-            let evictKey = autoLoggerOrder.removeFirst()
-            autoLoggerKeys.remove(evictKey)
-            autoLoggerCache.removeObject(forKey: evictKey as NSString)
-        }
+        trimAutoLoggerCache(to: limit)
     }
 
     private func applyAutoCacheLimit(_ limit: Int?) {
-        if let limit {
-            autoLoggerCache.countLimit = limit
-        } else {
-            autoLoggerCache.countLimit = 0
-        }
+        guard let limit else { return }
+        trimAutoLoggerCache(to: limit)
     }
 
-    fileprivate func handleAutoEviction(forKey key: String) {
-        logQueue.async {
-            self.autoLoggerKeys.remove(key)
-            if let idx = self.autoLoggerOrder.firstIndex(of: key) {
-                self.autoLoggerOrder.remove(at: idx)
-            }
+    private func trimAutoLoggerCache(to limit: Int) {
+        while autoLoggerOrder.count > limit {
+            let evictKey = autoLoggerOrder.removeFirst()
+            autoLoggers.removeValue(forKey: evictKey)
         }
     }
 }
