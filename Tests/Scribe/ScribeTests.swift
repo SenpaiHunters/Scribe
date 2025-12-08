@@ -136,6 +136,98 @@ final class ScribeTests: XCTestCase {
         XCTAssertTrue(capture.message?.contains("Sink test message") ?? false)
     }
 
+    func testSinksWithCategoryFilter() throws {
+        let allowedExpectation = XCTestExpectation(description: "Allowed category logged")
+        let blockedExpectation = XCTestExpectation(description: "Blocked category not logged")
+        blockedExpectation.isInverted = true
+
+        final class MessageCapture: @unchecked Sendable {
+            var message: String?
+        }
+        let capture = MessageCapture()
+
+        Log.logger.addSink(categories: [.testAllowed]) { message in
+            capture.message = message
+
+            if message.contains("[AllowedCategory]") {
+                allowedExpectation.fulfill()
+            }
+            if message.contains("[BlockedCategory]") {
+                blockedExpectation.fulfill()
+            }
+        }
+
+        Log.info("Sink test message allowed", category: .testAllowed)
+        Log.info("Sink test message blocked", category: .testBlocked)
+
+        wait(for: [allowedExpectation, blockedExpectation], timeout: 2.0)
+        XCTAssertNotNil(capture.message)
+        XCTAssertTrue(capture.message?.contains("Sink test message allowed") ?? false)
+    }
+
+    func testStreams() throws {
+        let expectation = XCTestExpectation(description: "Sink received log")
+
+        final class MessageCapture: @unchecked Sendable {
+            var message: String?
+        }
+        let capture = MessageCapture()
+
+        Task {
+            for await message in Log.logger.stream() {
+                capture.message = message
+                expectation.fulfill()
+            }
+        }
+
+        Task {
+            // Wait for the stream to start
+            try? await Task.sleep(for: .milliseconds(500))
+
+            Log.info("Sink test message")
+        }
+
+        wait(for: [expectation], timeout: 2.0)
+        XCTAssertNotNil(capture.message)
+        XCTAssertTrue(capture.message?.contains("Sink test message") ?? false)
+    }
+
+    func testStreamsWithCategoryFilter() throws {
+        let allowedExpectation = XCTestExpectation(description: "Allowed category logged")
+        let blockedExpectation = XCTestExpectation(description: "Blocked category not logged")
+        blockedExpectation.isInverted = true
+
+        final class MessageCapture: @unchecked Sendable {
+            var message: String?
+        }
+        let capture = MessageCapture()
+
+        Task {
+            for await message in Log.logger.stream(categories: [.testAllowed]) {
+                capture.message = message
+
+                if message.contains("[AllowedCategory]") {
+                    allowedExpectation.fulfill()
+                }
+                if message.contains("[BlockedCategory]") {
+                    blockedExpectation.fulfill()
+                }
+            }
+        }
+
+        Task {
+            // Wait for the stream to start
+            try? await Task.sleep(for: .milliseconds(500))
+
+            Log.info("Sink test message allowed", category: .testAllowed)
+            Log.info("Sink test message blocked", category: .testBlocked)
+        }
+
+        wait(for: [allowedExpectation, blockedExpectation], timeout: 2.0)
+        XCTAssertNotNil(capture.message)
+        XCTAssertTrue(capture.message?.contains("Sink test message allowed") ?? false)
+    }
+
     func testCategoryFiltering() throws {
         let allowedExpectation = XCTestExpectation(description: "Allowed category logged")
         let blockedExpectation = XCTestExpectation(description: "Blocked category not logged")
