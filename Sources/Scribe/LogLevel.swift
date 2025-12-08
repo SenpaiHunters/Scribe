@@ -175,9 +175,9 @@ public enum LogLevel: Int, Comparable, Sendable, CaseIterable, CustomStringConve
         case .auth: "AUT"
         case .metric: "MET"
         case .analytics: "ANL"
-        case .ui: "UI "
+        case .ui: "UI"
         case .user: "USR"
-        case .database: "DB "
+        case .database: "DB"
         case .storage: "STO"
         }
     }

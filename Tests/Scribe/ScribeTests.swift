@@ -11,6 +11,12 @@ final class ScribeTests: XCTestCase {
         Log.logger.setMinimumLevel(.debug)
         Log.logger.setConfiguration(.default)
         Log.logger.removeAllSinks()
+
+        let clearExpectation = XCTestExpectation(description: "Logger cache cleared")
+        Log.logger.clearLoggerCache {
+            clearExpectation.fulfill()
+        }
+        wait(for: [clearExpectation], timeout: 1.0)
     }
 
     func testBasicLogging() throws {
@@ -197,6 +203,73 @@ final class ScribeTests: XCTestCase {
         XCTAssertTrue(networkLevels.contains(.api))
         XCTAssertEqual(networkLevels.count, 2)
     }
+
+    func testLoggerCacheEvictionAndClear() throws {
+        let logExpectation = XCTestExpectation(description: "Logs processed with eviction")
+        logExpectation.expectedFulfillmentCount = 3
+
+        let sinkID = Log.logger.addSink { _ in
+            logExpectation.fulfill()
+        }
+
+        let configApplied = XCTestExpectation(description: "Configuration applied")
+        Log.logger.setConfiguration(LogConfiguration(autoLoggerCacheLimit: 2))
+        Log.logger.getConfiguration { cfg in
+            if cfg.autoLoggerCacheLimit == 2 {
+                configApplied.fulfill()
+            }
+        }
+
+        wait(for: [configApplied], timeout: 1.0)
+
+        Log.info("Evict one", category: .evictOneAuto)
+        Log.info("Evict two", category: .evictTwoAuto)
+        Log.info("Evict three", category: .evictThreeAuto)
+
+        wait(for: [logExpectation], timeout: 2.0)
+
+        XCTAssertEqual(Log.logger.loggerCacheCount, 2)
+
+        let cleared = XCTestExpectation(description: "Cache cleared")
+        Log.logger.clearLoggerCache {
+            cleared.fulfill()
+        }
+        wait(for: [cleared], timeout: 1.0)
+        XCTAssertEqual(Log.logger.loggerCacheCount, 0)
+
+        Log.logger.removeSink(sinkID)
+    }
+
+    func testAutoCategoryNameIsSanitizedToFileName() throws {
+        let expectation = XCTestExpectation(description: "Auto category sanitized")
+
+        let sinkID = Log.logger.addSink { line in
+            if line.contains("[FontLibrary.swift]") {
+                XCTAssertFalse(line.contains("Scribe/FontLibrary.swift"))
+                expectation.fulfill()
+            }
+        }
+
+        Log.info("Test auto category", category: .init("Scribe/FontLibrary.swift"))
+
+        wait(for: [expectation], timeout: 1.0)
+        Log.logger.removeSink(sinkID)
+    }
+
+    func testDefaultCategoryUsesCallerFile() throws {
+        let expectation = XCTestExpectation(description: "Default category uses caller file")
+
+        let sinkID = Log.logger.addSink { line in
+            if line.contains("[ScribeTests.swift]") {
+                expectation.fulfill()
+            }
+        }
+
+        Log.info("Default category should be caller file")
+
+        wait(for: [expectation], timeout: 1.0)
+        Log.logger.removeSink(sinkID)
+    }
 }
 
 extension LogCategory {
@@ -204,4 +277,8 @@ extension LogCategory {
 
     static let testAllowed = LogCategory("AllowedCategory")
     static let testBlocked = LogCategory("BlockedCategory")
+
+    static let evictOneAuto = LogCategory("Auto/EvictOne.swift")
+    static let evictTwoAuto = LogCategory("Auto/EvictTwo.swift")
+    static let evictThreeAuto = LogCategory("Auto/EvictThree.swift")
 }

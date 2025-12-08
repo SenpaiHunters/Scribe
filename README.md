@@ -6,11 +6,13 @@ Supports granular log levels, category filtering, custom formatting, and pluggab
 
 ## Features
 
-- Clear, expressive log levels with emojis and short codes
+- Clear log levels with emoji-first output; short codes are opt-in
+- Reusable `LogCategory` type to avoid stringly-typed categories
+- Per-category `Logger` instances for Console/Xcode filtering
 - Thread-safe, async logging via a dedicated queue
 - os.log integration with sensible OSLogType mapping
-- Category filtering through configuration
-- Customizable formatter with timestamps and file/line info
+- Category filtering through configuration (`Set<LogCategory>`)
+- Customizable formatter using `LogConfiguration.FormatterContext`
 - Pluggable sinks for mirroring logs (e.g., tests, files, remote endpoints)
 - Minimal API for everyday logging via static `Log` helpers
 
@@ -19,7 +21,7 @@ Supports granular log levels, category filtering, custom formatting, and pluggab
 Install via SPM from `https://github.com/SenpaiHunters/Scribe.git`
 
 ```swift
-.package(url: "https://github.com/SenpaiHunters/Scribe.git", from: "1.0.0")
+.package(url: "https://github.com/SenpaiHunters/Scribe.git", branch: "main")
 ```
 
 Then import in your source files:
@@ -33,11 +35,20 @@ import Scribe
 ```swift
 import Scribe
 
+// Define reusable categories once
+extension LogCategory {
+    static let app = LogCategory("App")
+    static let auth = LogCategory("Auth")
+    static let network = LogCategory("NetworkLayer")
+    static let apiService = LogCategory("APIService")
+    static let profile = LogCategory("Profile")
+}
+
 // Set minimum level (messages below this level are ignored)
 LogManager.shared.minimumLevel = .debug
 
 // Optional: restrict logging to specific categories
-let config = LogConfiguration(enabledCategories: ["NetworkLayer", "APIService"])
+let config = LogConfiguration(enabledCategories: [.network, .apiService])
 LogManager.shared.configuration = config
 
 // Optional: add a sink (e.g., for tests or file mirroring)
@@ -46,11 +57,11 @@ LogManager.shared.addSink { line in
 }
 
 // Log messages anywhere in your app
-Log.debug("Bootstrapping app", category: "App")
-Log.info("User signed in", category: "Auth")
-Log.warn("Slow response", category: "NetworkLayer")
-Log.error("Failed to decode payload", category: "APIService")
-Log.success("Profile updated", category: "Profile")
+Log.debug("Bootstrapping app", category: .app)
+Log.info("User signed in", category: .auth)
+Log.warn("Slow response", category: .network)
+Log.error("Failed to decode payload", category: .apiService)
+Log.success("Profile updated", category: .profile)
 ```
 
 ## API Overview
@@ -76,6 +87,22 @@ Represents message severity and domain.
 - **OS integration**:
   - `level.osLogType` maps to OSLogType
 
+### LogCategory
+
+Lightweight wrapper for reusable, strongly typed categories.
+
+- Defaults to `LogCategory(#fileID)` when you omit the `category` parameter.
+- Extend it once and reuse everywhere to avoid typo-prone string literals:
+
+```swift
+extension LogCategory {
+    static let apiService = LogCategory("APIService")
+    static let storage = LogCategory("Storage")
+}
+```
+
+- Each category maps to its own `Logger` instance under the same subsystem, so Console and Xcode show first-class category filters without extra configuration.
+
 ### LogManager
 
 Core logger with configuration and sinks.
@@ -97,21 +124,33 @@ Core logger with configuration and sinks.
 
 Configuration struct for customizing log output.
 
-- `enabledCategories: Set<String>?` — categories to include; `nil` allows all
-- `formatter: ((LogLevel, String, String, String, Int, Date) -> String)?` — custom formatter
+- `enabledCategories: Set<LogCategory>?` — categories to include; `nil` allows all
+- `formatter: ((LogConfiguration.FormatterContext) -> String)?` — custom formatter
 - `includeTimestamp: Bool` — include timestamps (default: `true`)
+- `includeEmoji: Bool` — include level emoji (default: `true`)
+- `includeShortCode: Bool` — include level short code like `[DBG]` (default: `false`)
+- `autoLoggerCacheLimit: Int?` — limit cached auto-generated `Logger` instances (e.g., `#fileID`); `nil` means unbounded; default is 100
 - `dateFormat: String` — timestamp format (default: `"yyyy-MM-dd HH:mm:ss.SSSZ"`)
+
+**FormatterContext fields:**
+
+- `level: LogLevel`
+- `category: LogCategory`
+- `message: String`
+- `file: String`
+- `line: Int`
+- `timestamp: Date`
 
 **Default formatter output:**
 
-```
-[timestamp] [emoji] [SHORT] [Category] Message — File.swift:123
+```text
+[timestamp] [emoji] [Category] Message — File.swift:123
 ```
 
 **Example:**
 
-```
-2025-11-28 10:15:30.123+1000 🔍 [DBG] [App] Bootstrapping app — AppDelegate.swift:42
+```text
+2025-11-28 10:15:30.123+1000 🔍 [App] Bootstrapping app — AppDelegate.swift:42
 ```
 
 ### Log
@@ -131,9 +170,15 @@ Ergonomic static helpers that auto-fill file/function/line:
 **Usage:**
 
 ```swift
-Log.api("GET /v1/profile", category: "APIService")
-Log.metric("Home render time: 34ms", category: "Perf")
-Log.user("Tapped Purchase", category: "UI")
+extension LogCategory {
+    static let apiService = LogCategory("APIService")
+    static let perf = LogCategory("Perf")
+    static let ui = LogCategory("UI")
+}
+
+Log.api("GET /v1/profile", category: .apiService)
+Log.metric("Home render time: 34ms", category: .perf)
+Log.user("Tapped Purchase", category: .ui)
 ```
 
 ## Configuration
@@ -150,7 +195,13 @@ LogManager.shared.minimumLevel = .info
 Restrict logging to specific categories:
 
 ```swift
-let config = LogConfiguration(enabledCategories: ["NetworkLayer", "Auth", "APIService"])
+extension LogCategory {
+    static let networkLayer = LogCategory("NetworkLayer")
+    static let auth = LogCategory("Auth")
+    static let apiService = LogCategory("APIService")
+}
+
+let config = LogConfiguration(enabledCategories: [.networkLayer, .auth, .apiService])
 LogManager.shared.configuration = config
 ```
 
@@ -161,17 +212,36 @@ let config = LogConfiguration(enabledCategories: nil)
 LogManager.shared.configuration = config
 ```
 
+**Console/Xcode filtering:** Each `LogCategory` uses its own `Logger` under the shared subsystem (bundle identifier by default). In Console.app or Xcode, filter by `subsystem=<your bundle id>` and `category=<LogCategory name>` to zero in on specific modules.
+
 ### Custom Formatting
 
-Provide your own formatter for complete control over log output:
+Provide your own formatter for complete control over log output. The formatter receives a single `FormatterContext`, so you don't need to juggle multiple parameters:
 
 ```swift
 let config = LogConfiguration(
-    formatter: { level, category, message, file, line, timestamp in
-        let fileName = (file as NSString).lastPathComponent
-        return "[\(level.shortCode)] \(category): \(message) (\(fileName):\(line))"
+    formatter: { context in
+        let fileName = (context.file as NSString).lastPathComponent
+        return "[\(context.level.shortCode)] [\(context.category.name)] \(context.message) (\(fileName):\(context.line))"
     }
 )
+LogManager.shared.configuration = config
+```
+
+### Toggle Emojis or Short Codes
+
+- Default: emojis on, short codes off.
+- Turn off emojis:
+
+```swift
+let config = LogConfiguration(includeEmoji: false)
+LogManager.shared.configuration = config
+```
+
+- Turn on short codes (and optionally keep emojis):
+
+```swift
+let config = LogConfiguration(includeEmoji: true, includeShortCode: true)
 LogManager.shared.configuration = config
 ```
 
@@ -189,11 +259,30 @@ let config = LogConfiguration(dateFormat: "HH:mm:ss")
 LogManager.shared.configuration = config
 ```
 
+### Logger Cache Control
+
+- Cap cached auto-generated `Logger` instances (e.g., `#fileID`) to avoid unbounded growth:
+
+```swift
+let config = LogConfiguration(autoLoggerCacheLimit: 50)
+LogManager.shared.configuration = config
+```
+
+- Clear both auto-generated and custom logger caches (for long-running sessions or tests):
+
+```swift
+LogManager.shared.clearLoggerCache()
+```
+
+- Notes:
+  - Auto-generated categories (`#fileID`) are cached in an internal `NSCache` with a default cap of 100.
+  - Custom categories you define (e.g., `LogCategory("APIService")`) are stored in a dictionary and are not evicted.
+
 ### Combined Configuration
 
 ```swift
 let config = LogConfiguration(
-    enabledCategories: ["App", "Network"],
+    enabledCategories: [.init("App"), .init("Network")],
     includeTimestamp: true,
     dateFormat: "HH:mm:ss.SSS"
 )
@@ -246,10 +335,11 @@ let count = LogManager.shared.sinkCount
 - `os_log` defers formatting efficiently and integrates with Console.app.
 - Use `minimumLevel` to reduce overhead in production.
 - All configuration access is thread-safe.
+- Each `LogCategory` gets its own `Logger`, so Console/Xcode filtering by category works out of the box.
 
 ## Best Practices
 
-- Use categories to group logs by module or feature (e.g., "APIService", "Storage").
+- Use categories to group logs by module or feature (e.g., `LogCategory("APIService")`, `LogCategory("Storage")`).
 - Raise `minimumLevel` in production (e.g., `.info` or `.warning`).
 - Avoid logging PII or secrets; this package does not perform encryption or redaction.
 - Add a sink for test environments to assert on log output.
@@ -258,11 +348,16 @@ let count = LogManager.shared.sinkCount
 ## Example Integration
 
 ```swift
+extension LogCategory {
+    static let app = LogCategory("App")
+    static let apiService = LogCategory("APIService")
+}
+
 final class APIService {
     func fetchProfile() {
-        Log.api("GET /v1/profile", category: "APIService")
+        Log.api("GET /v1/profile", category: .apiService)
         // ... network call ...
-        Log.debug("Decoded Profile(id: 123)", category: "APIService")
+        Log.debug("Decoded Profile(id: 123)", category: .apiService)
     }
 }
 
@@ -273,12 +368,12 @@ struct MyApp: App {
         LogManager.shared.minimumLevel = .info
         
         let config = LogConfiguration(
-            enabledCategories: ["App", "APIService"],
+            enabledCategories: [.app, .apiService],
             includeTimestamp: true
         )
         LogManager.shared.configuration = config
         
-        Log.info("App launched", category: "App")
+        Log.info("App launched", category: .app)
     }
 
     var body: some Scene {
@@ -300,7 +395,7 @@ func testLogging() {
         expectation.fulfill()
     }
     
-    Log.info("Test message", category: "Test")
+    Log.info("Test message", category: .init("Test"))
     
     wait(for: [expectation], timeout: 2.0)
     LogManager.shared.removeSink(sinkID)

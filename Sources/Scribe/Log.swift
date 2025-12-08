@@ -37,12 +37,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func debug(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .debug, category: category, file: file, function: function, line: line)
+        log(message, level: .debug, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs a trace message for detailed execution flow tracking.
@@ -57,12 +58,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func trace(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .trace, category: category, file: file, function: function, line: line)
+        log(message, level: .trace, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs a print-level message as a structured replacement for `Swift.print()`.
@@ -75,12 +77,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func print(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .print, category: category, file: file, function: function, line: line)
+        log(message, level: .print, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     // MARK: - General Information
@@ -95,12 +98,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func info(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .info, category: category, file: file, function: function, line: line)
+        log(message, level: .info, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs a notice about a notable but non-critical event.
@@ -113,12 +117,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func notice(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .notice, category: category, file: file, function: function, line: line)
+        log(message, level: .notice, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     // MARK: - Warnings & Errors
@@ -133,12 +138,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func warn(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .warning, category: category, file: file, function: function, line: line)
+        log(message, level: .warning, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs an error that occurred but was handled.
@@ -151,12 +157,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func error(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .error, category: category, file: file, function: function, line: line)
+        log(message, level: .error, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs a fatal error that may cause app termination or severe malfunction.
@@ -169,12 +176,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func fatal(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .fatal, category: category, file: file, function: function, line: line)
+        log(message, level: .fatal, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     // MARK: - Success & Completion
@@ -189,12 +197,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func success(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .success, category: category, file: file, function: function, line: line)
+        log(message, level: .success, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs task or operation completion.
@@ -207,12 +216,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func done(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .done, category: category, file: file, function: function, line: line)
+        log(message, level: .done, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     // MARK: - Network Operations
@@ -227,12 +237,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func network(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .network, category: category, file: file, function: function, line: line)
+        log(message, level: .network, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs API call activity (requests, responses, errors).
@@ -245,12 +256,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func api(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .api, category: category, file: file, function: function, line: line)
+        log(message, level: .api, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     // MARK: - Security & Authentication
@@ -265,12 +277,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func security(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .security, category: category, file: file, function: function, line: line)
+        log(message, level: .security, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs authentication events (login, logout, token refresh).
@@ -283,12 +296,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func auth(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .auth, category: category, file: file, function: function, line: line)
+        log(message, level: .auth, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     // MARK: - Performance & Analytics
@@ -303,12 +317,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func metric(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .metric, category: category, file: file, function: function, line: line)
+        log(message, level: .metric, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs analytics events (user behavior, feature usage).
@@ -321,12 +336,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func analytics(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .analytics, category: category, file: file, function: function, line: line)
+        log(message, level: .analytics, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     // MARK: - UI & User Interaction
@@ -341,12 +357,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func ui(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .ui, category: category, file: file, function: function, line: line)
+        log(message, level: .ui, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs user actions (taps, gestures, input).
@@ -359,12 +376,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func user(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .user, category: category, file: file, function: function, line: line)
+        log(message, level: .user, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     // MARK: - Database & Storage
@@ -379,12 +397,13 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func database(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .database, category: category, file: file, function: function, line: line)
+        log(message, level: .database, category: category, fileID: fileID, function: function, file: file, line: line)
     }
 
     /// Logs storage operations (file I/O, cache, persistence).
@@ -397,11 +416,25 @@ public enum Log: Sendable {
     ///   - line: The source line number (auto-captured).
     public static func storage(
         _ message: String,
-        category: LogCategory = .init(#fileID),
+        category: LogCategory? = nil,
+        fileID: String = #fileID,
         function: String = #function,
         file: String = #file,
         line: Int = #line
     ) {
-        logger.log(message, level: .storage, category: category, file: file, function: function, line: line)
+        log(message, level: .storage, category: category, fileID: fileID, function: function, file: file, line: line)
+    }
+
+    private static func log(
+        _ message: String,
+        level: LogLevel,
+        category: LogCategory?,
+        fileID: String,
+        function: String,
+        file: String,
+        line: Int
+    ) {
+        let resolvedCategory = category ?? LogCategory(fileID)
+        logger.log(message, level: level, category: resolvedCategory, file: file, function: function, line: line)
     }
 }
