@@ -25,80 +25,80 @@ import os
 /// ```
 public enum LogLevel: Int, Comparable, Sendable, CaseIterable, CustomStringConvertible {
     // MARK: - Debug & Development
-    
+
     /// 🔬 Detailed debugging for tracing execution flow.
     case trace = 0
-    
+
     /// 🔍 Debug information for development.
     case debug = 1
-    
+
     /// 📝 Standard print replacement with structured output.
     case print = 2
 
     // MARK: - General Information
-    
+
     /// ℹ️ General informational messages.
     case info = 10
-    
+
     /// 📢 Notable events worth attention.
     case notice = 11
 
     // MARK: - Warnings & Errors
-    
+
     /// ⚠️ Warning about potential issues.
     case warning = 20
-    
+
     /// ❌ Error that was handled.
     case error = 21
-    
+
     /// 💥 Fatal error causing severe malfunction.
     case fatal = 22
 
     // MARK: - Success & Completion
-    
+
     /// ✅ Successful operation.
     case success = 30
-    
+
     /// ✨ Task or operation completion.
     case done = 31
 
     // MARK: - Network Operations
-    
+
     /// 🌐 Network-related activity.
     case network = 40
-    
+
     /// 🚀 API call activity.
     case api = 41
 
     // MARK: - Security & Authentication
-    
+
     /// 🔒 Security-related events.
     case security = 50
-    
+
     /// 🔑 Authentication events.
     case auth = 51
 
     // MARK: - Performance & Analytics
-    
+
     /// 📊 Performance metrics.
     case metric = 60
-    
+
     /// 📈 Analytics events.
     case analytics = 61
 
     // MARK: - UI & User Interaction
-    
+
     /// 🎨 UI events.
     case ui = 70
-    
+
     /// 👤 User actions.
     case user = 71
 
     // MARK: - Database & Storage
-    
+
     /// 💾 Database operations.
     case database = 80
-    
+
     /// 📦 Storage operations.
     case storage = 81
 
@@ -175,9 +175,9 @@ public enum LogLevel: Int, Comparable, Sendable, CaseIterable, CustomStringConve
         case .auth: "AUT"
         case .metric: "MET"
         case .analytics: "ANL"
-        case .ui: "UI "
+        case .ui: "UI"
         case .user: "USR"
-        case .database: "DB "
+        case .database: "DB"
         case .storage: "STO"
         }
     }
@@ -205,15 +205,26 @@ public enum LogLevel: Int, Comparable, Sendable, CaseIterable, CustomStringConve
     /// The family this log level belongs to.
     public var family: Family {
         switch self {
-        case .trace, .debug, .print: .development
-        case .info, .notice: .general
-        case .warning, .error, .fatal: .problems
-        case .success, .done: .success
-        case .network, .api: .networking
-        case .security, .auth: .security
-        case .metric, .analytics: .performance
-        case .ui, .user: .ui
-        case .database, .storage: .data
+        case .trace,
+             .debug,
+             .print: .development
+        case .info,
+             .notice: .general
+        case .warning,
+             .error,
+             .fatal: .problems
+        case .success,
+             .done: .success
+        case .network,
+             .api: .networking
+        case .security,
+             .auth: .security
+        case .metric,
+             .analytics: .performance
+        case .ui,
+             .user: .ui
+        case .database,
+             .storage: .data
         }
     }
 
@@ -221,31 +232,31 @@ public enum LogLevel: Int, Comparable, Sendable, CaseIterable, CustomStringConve
 
     /// Error and fatal levels.
     public static let allSevere: Set<LogLevel> = [.error, .fatal]
-    
+
     /// Warning level only.
     public static let allWarnings: Set<LogLevel> = [.warning]
-    
+
     /// All problem levels (warnings, errors, fatal).
     public static let allProblems: Set<LogLevel> = allSevere.union(allWarnings)
-    
+
     /// Success and done levels.
     public static let allSuccess: Set<LogLevel> = [.success, .done]
-    
+
     /// Network and API levels.
     public static let allNetwork: Set<LogLevel> = [.network, .api]
-    
+
     /// Security and auth levels.
     public static let allSecurity: Set<LogLevel> = [.security, .auth]
-    
+
     /// Metric and analytics levels.
     public static let allPerformance: Set<LogLevel> = [.metric, .analytics]
-    
+
     /// UI and user levels.
     public static let allUI: Set<LogLevel> = [.ui, .user]
-    
+
     /// Database and storage levels.
     public static let allData: Set<LogLevel> = [.database, .storage]
-    
+
     /// Verbose levels typically filtered in production (trace, debug, print).
     public static let noisyLevels: Set<LogLevel> = [.trace, .debug, .print]
 
@@ -299,9 +310,24 @@ public enum LogLevel: Int, Comparable, Sendable, CaseIterable, CustomStringConve
     /// Maps this log level to the appropriate `OSLogType`.
     public var osLogType: OSLogType {
         switch self {
-        case .trace, .debug, .print: .debug
-        case .info, .notice, .success, .done: .info
-        case .warning, .network, .api, .security, .auth, .metric, .analytics, .ui, .user, .database, .storage: .default
+        case .trace,
+             .debug,
+             .print: .debug
+        case .info,
+             .notice,
+             .success,
+             .done: .info
+        case .warning,
+             .network,
+             .api,
+             .security,
+             .auth,
+             .metric,
+             .analytics,
+             .ui,
+             .user,
+             .database,
+             .storage: .default
         case .error: .error
         case .fatal: .fault
         }
