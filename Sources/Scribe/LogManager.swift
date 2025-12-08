@@ -275,7 +275,7 @@ public final class LogManager: @unchecked Sendable {
                     let fileName = (file as NSString).lastPathComponent
                     parts.append("— \(fileName):\(line)")
                 }
-                
+
                 formatted = parts.joined(separator: " ")
             }
 

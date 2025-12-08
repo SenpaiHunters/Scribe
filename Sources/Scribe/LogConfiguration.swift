@@ -32,7 +32,7 @@ public struct LogConfiguration: Sendable {
     ///
     /// Only used by the built-in formatter.
     public var includeShortCode: Bool
-    
+
     /// Whether to include the file and line number in the format: [file]:[line number].
     ///
     /// Only used by the built-in formatter.
@@ -77,7 +77,7 @@ public struct LogConfiguration: Sendable {
         dateFormat: String = "yyyy-MM-dd HH:mm:ss.SSSZ"
     ) {
         self.enabledCategories = enabledCategories
-        self.formatter = nil
+        formatter = nil
         self.includeTimestamp = includeTimestamp
         self.includeEmoji = includeEmoji
         self.includeShortCode = includeShortCode
@@ -98,16 +98,16 @@ public struct LogConfiguration: Sendable {
     public init(
         enabledCategories: Set<LogCategory>? = nil,
         formatter: @escaping @Sendable (FormatterContext) -> String,
-        autoLoggerCacheLimit: Int? = 100,
+        autoLoggerCacheLimit: Int? = 100
     ) {
         self.enabledCategories = enabledCategories
         self.formatter = formatter
-        self.includeTimestamp = true
-        self.includeEmoji = true
-        self.includeShortCode = false
-        self.includeFileAndLineNumber = true
+        includeTimestamp = true
+        includeEmoji = true
+        includeShortCode = false
+        includeFileAndLineNumber = true
         self.autoLoggerCacheLimit = autoLoggerCacheLimit
-        self.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ"
+        dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ"
     }
 
     /// Default configuration with timestamps enabled and all categories allowed.
