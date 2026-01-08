@@ -22,7 +22,7 @@
     ///
     /// # Usage
     ///
-    /// The `@Scribable` macro allows a type to automatically provide:
+    /// The `@Loggable` macro allows a type to automatically provide:
     /// - a `Log` instance
     /// - a `LogCategory` instance
     /// specific to that type.
@@ -30,10 +30,10 @@
     /// Why is this useful?
     /// Normally, you would need to define a `LogCategory` for each type and pass it into every log statement.
     /// It's easy to forget to create or use the correct category, which can lead to inconsistent logging.
-    /// `@Scribable` solves this by automatically generating the appropriate category for you,
+    /// `@Loggable` solves this by automatically generating the appropriate category for you,
     /// ensuring that every log statement is correctly categorized.
     ///
-    /// Example before using `@Scribable`:
+    /// Example before using `@Loggable`:
     /// ```swift
     /// final class Updater {
     ///     func fetchLatestInfo() {
@@ -54,9 +54,9 @@
     /// }
     /// ```
     ///
-    /// With `@Scribable`:
+    /// With `@Loggable`:
     /// ```swift
-    /// @Scribable
+    /// @Loggable
     /// final class Updater {
     ///     func fetchLatestInfo() {
     ///         log.info("Checking for updates...")
@@ -83,7 +83,7 @@
     ///
     /// **Static Log Style**
     ///
-    /// Usage: `@Scribable(.static)`
+    /// Usage: `@Loggable(.static)`
     ///
     /// - A static property with the name `log` is exposed, of type `Log`.
     /// - A static property with the name `_logCategory` is exposed, of type `LogCategory`. This category is used in the
@@ -91,7 +91,7 @@
     ///
     /// ## Instance Log Style
     ///
-    /// Usage: `@Scribable(.instance)` or simply `@Scribable`
+    /// Usage: `@Loggable(.instance)` or simply `@Loggable`
     ///
     /// - An instance property with the name `log` is exposed, of type `Log`. This is actually just a computed variable
     /// for the static property defined below:
@@ -101,10 +101,18 @@
     /// - A static property with the name `_logCategory` is exposed, of type `LogCategory`. This category is used in the
     /// Log to help categorize this type.
     ///
+    /// # Naming
+    ///
+    /// By default, the `@Loggable` macro uses the type’s name as the log category.
+    /// If you’d like to override this, you can provide a custom name as the macro’s first argument.
+    ///
+    /// For example, applying `@Loggable("Network")` to a type named `NetworkManager`
+    /// will create a `LogCategory` named `Network` instead of `NetworkManager`.
+    ///
     @attached(member, names: named(log), named(_log), named(_logCategory))
-    public macro Scribable(_ style: LogStyle = .instance) = #externalMacro(
+    public macro Loggable(_ name: StaticString? = nil, _ style: LogStyle = .instance) = #externalMacro(
         module: "ScribeMacros",
-        type: "ScribableMacro"
+        type: "LoggableMacro"
     )
 
 #endif

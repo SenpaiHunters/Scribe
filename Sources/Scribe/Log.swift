@@ -19,11 +19,11 @@
 /// log.debug("New user registered")
 /// ```
 ///
-/// It is recommended to use this alongside the `@Scribable` macro, which automatically creates the `Log` for you.
+/// It is recommended to use this alongside the `@Loggable` macro, which automatically creates the `Log` for you.
 /// You can use is as shown below:
 ///
 /// ```swift
-/// @Scribable
+/// @Loggable
 /// struct TokenManager {
 ///     func test() {
 ///        log.success("New token generated")
