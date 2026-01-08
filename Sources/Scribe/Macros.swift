@@ -110,9 +110,12 @@
     /// will create a `LogCategory` named `Network` instead of `NetworkManager`.
     ///
     @attached(member, names: named(log), named(_log), named(_logCategory))
-    public macro Loggable(_ name: StaticString? = nil, _ style: LogStyle = .instance) = #externalMacro(
+    public macro Loggable(
+        _ name: StaticString? = nil,
+        category: LogCategory? = nil,
+        style: LogStyle = .instance
+    ) = #externalMacro(
         module: "ScribeMacros",
         type: "LoggableMacro"
     )
-
 #endif
