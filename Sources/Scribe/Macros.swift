@@ -83,7 +83,7 @@
     ///
     /// **Static Log Style**
     ///
-    /// Usage: `@Loggable(.static)`
+    /// Usage: `@Loggable(style: .static)`
     ///
     /// - A static property with the name `log` is exposed, of type `Log`.
     /// - A static property with the name `_logCategory` is exposed, of type `LogCategory`. This category is used in the
@@ -91,7 +91,7 @@
     ///
     /// ## Instance Log Style
     ///
-    /// Usage: `@Loggable(.instance)` or simply `@Loggable`
+    /// Usage: `@Loggable(style: .instance)` or simply `@Loggable`
     ///
     /// - An instance property with the name `log` is exposed, of type `Log`. This is actually just a computed variable
     /// for the static property defined below:
