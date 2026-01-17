@@ -1,11 +1,4 @@
-//
-//  LogCategory+Extensions.swift
-//  Scribe
-//
-//  Created by Kai Azim on 2026-01-17.
-//
-
-import Scribe
+@testable @_spi(Internals) import Scribe
 
 extension LogCategory {
     static let test = LogCategory("TestCategory")

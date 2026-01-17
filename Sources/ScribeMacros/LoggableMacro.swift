@@ -60,7 +60,7 @@ struct LoggableMacro: MemberMacro {
             members.append(
                 DeclSyntax(
                     """
-                    \(raw: accessPrefix)static var _logCategory: LogCategory {
+                    \(raw: accessPrefix)static var logCategory: LogCategory {
                         \(categoryExpr)
                     }
                     """
@@ -71,7 +71,7 @@ struct LoggableMacro: MemberMacro {
             members.append(
                 DeclSyntax(
                     """
-                    \(raw: accessPrefix)static let _logCategory: LogCategory = LogCategory("\(raw: name)")
+                    \(raw: accessPrefix)static let logCategory: LogCategory = LogCategory("\(raw: name)")
                     """
                 )
             )
@@ -82,7 +82,7 @@ struct LoggableMacro: MemberMacro {
             members.append(
                 DeclSyntax(
                     """
-                    \(raw: accessPrefix)static let log = Log(category: _logCategory)
+                    \(raw: accessPrefix)static let log = Log(category: logCategory)
                     """
                 )
             )
@@ -90,7 +90,7 @@ struct LoggableMacro: MemberMacro {
             members.append(
                 DeclSyntax(
                     """
-                    private static let _log = Log(category: \(raw: typeName)._logCategory)
+                    private static let _log = Log(category: \(raw: typeName).logCategory)
                     """
                 )
             )
@@ -111,7 +111,7 @@ struct LoggableMacro: MemberMacro {
     ///
     /// This is used to:
     /// - Generate the default `LogCategory` name when no custom name is provided.
-    /// - Reference the type explicitly in the generated `_log` property (e.g., `TypeName._logCategory`).
+    /// - Reference the type explicitly in the generated `_log` property (e.g., `TypeName.logCategory`).
     ///   This is because using `Self.<>` can lead to covariant self errors.
     ///
     /// Returns `nil` if the declaration is not a supported type (enum, struct, or class).
@@ -129,7 +129,7 @@ struct LoggableMacro: MemberMacro {
 
     /// Extracts the access level modifier from the declaration.
     ///
-    /// This ensures the generated properties (`_logCategory`, `log`) match the access level of the type they're
+    /// This ensures the generated properties (`logCategory`, `log`) match the access level of the type they're
     /// attached to, rather than being hardcoded to `public`.
     ///
     /// Returns an empty string if no explicit access level is found.

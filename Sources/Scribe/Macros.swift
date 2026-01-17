@@ -86,7 +86,7 @@
     /// Usage: `@Loggable(style: .static)`
     ///
     /// - A static property with the name `log` is exposed, of type `Log`.
-    /// - A static property with the name `_logCategory` is exposed, of type `LogCategory`. This category is used in the
+    /// - A static property with the name `logCategory` is exposed, of type `LogCategory`. This category is used in the
     /// Log to help categorize this type.
     ///
     /// ## Instance Log Style
@@ -98,7 +98,7 @@
     /// - A private, static property with the name `_log` is exposed, of type `Log`. Expect this to work in the same way
     /// that the static log style defines `log`, just that it is private. This is used to store a single, shared
     /// instance across all instances of this type.
-    /// - A static property with the name `_logCategory` is exposed, of type `LogCategory`. This category is used in the
+    /// - A static property with the name `logCategory` is exposed, of type `LogCategory`. This category is used in the
     /// Log to help categorize this type.
     ///
     /// # Naming
@@ -109,7 +109,7 @@
     /// For example, applying `@Loggable("Network")` to a type named `NetworkManager`
     /// will create a `LogCategory` named `Network` instead of `NetworkManager`.
     ///
-    @attached(member, names: named(log), named(_log), named(_logCategory))
+    @attached(member, names: named(log), named(_log), named(logCategory))
     public macro Loggable(
         _ name: StaticString? = nil,
         category: LogCategory? = nil,

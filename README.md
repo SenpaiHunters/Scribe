@@ -118,9 +118,9 @@ struct TokenManager {
 
 **Options:**
 - `@Loggable` — uses the type name as the category
-- `@Loggable("CustomName")` - uses a custom category name
-- `@Loggable(category: .network)` - uses an existing `LogCategory`
-- `@Loggable(style: .static)` - generates a static `log` property instead of instance
+- `@Loggable("CustomName")` — uses a custom category name
+- `@Loggable(category: .network)` — uses an existing `LogCategory`
+- `@Loggable(style: .static)` — generates a static `log` property instead of instance
 
 ### LogManager
 
@@ -354,6 +354,20 @@ LogManager.shared.removeAllSinks()
 let count = LogManager.shared.sinkCount
 ```
 
+### Streaming
+
+For async/await, use `stream()` instead of callbacks:
+
+```swift
+let stream = LogManager.shared.stream()
+
+Task {
+    for await line in stream {
+        print("Log:", line)
+    }
+}
+```
+
 ## Threading and Performance
 
 - Logging occurs on a dedicated utility queue to minimize call-site blocking.
@@ -364,6 +378,7 @@ let count = LogManager.shared.sinkCount
 
 ## Best Practices
 
+- Use the `@Loggable` macro to automatically generate a `log` property for your types.
 - Use categories to group logs by module or feature (e.g., `LogCategory("APIService")`, `LogCategory("Storage")`).
 - Raise `minimumLevel` in production (e.g., `.info` or `.warning`).
 - Avoid logging PII or secrets; this package does not perform encryption or redaction.
@@ -375,14 +390,14 @@ let count = LogManager.shared.sinkCount
 ```swift
 extension LogCategory {
     static let app = LogCategory("App")
-    static let apiService = LogCategory("APIService")
 }
 
+@Loggable
 final class APIService {
     func fetchProfile() {
-        Log.api("GET /v1/profile", category: .apiService)
+        log.api("GET /v1/profile")
         // ... network call ...
-        Log.debug("Decoded Profile(id: 123)", category: .apiService)
+        log.debug("Decoded Profile(id: 123)")
     }
 }
 
@@ -393,7 +408,7 @@ struct MyApp: App {
         LogManager.shared.minimumLevel = .info
         
         let config = LogConfiguration(
-            enabledCategories: [.app, .apiService],
+            enabledCategories: [.app, APIService.logCategory],
             includeTimestamp: true
         )
         LogManager.shared.configuration = config

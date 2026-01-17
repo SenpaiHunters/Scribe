@@ -55,32 +55,32 @@ final class LoggableMacroTests: XCTestCase {
     }
 
     func testLoggableClass() {
-        XCTAssertEqual(LoggableClass._logCategory.name, "LoggableClass")
+        XCTAssertEqual(LoggableClass.logCategory.name, "LoggableClass")
         XCTAssertEqual(LoggableClass().log.category.name, "LoggableClass")
     }
 
     func testLoggableStruct() {
-        XCTAssertEqual(LoggableStruct._logCategory.name, "LoggableStruct")
+        XCTAssertEqual(LoggableStruct.logCategory.name, "LoggableStruct")
         XCTAssertEqual(LoggableStruct().log.category.name, "LoggableStruct")
     }
 
     func testLoggableEnum() {
-        XCTAssertEqual(LoggableEnum._logCategory.name, "LoggableEnum")
+        XCTAssertEqual(LoggableEnum.logCategory.name, "LoggableEnum")
         XCTAssertEqual(LoggableEnum.one.log.category.name, "LoggableEnum")
     }
 
     func testLoggableStaticStyle() {
-        XCTAssertEqual(LoggableClassStatic._logCategory.name, "LoggableClassStatic")
+        XCTAssertEqual(LoggableClassStatic.logCategory.name, "LoggableClassStatic")
         XCTAssertEqual(LoggableClassStatic.log.category.name, "LoggableClassStatic")
     }
 
     func testLoggableCustomName() {
-        XCTAssertEqual(LoggableCustomName._logCategory.name, "CustomName")
+        XCTAssertEqual(LoggableCustomName.logCategory.name, "CustomName")
         XCTAssertEqual(LoggableCustomName().log.category.name, "CustomName")
     }
 
     func testLoggablePassedCategory() {
-        XCTAssertEqual(LoggablePassedCategory._logCategory.name, "PassedInCategory")
+        XCTAssertEqual(LoggablePassedCategory.logCategory.name, "PassedInCategory")
         XCTAssertEqual(LoggablePassedCategory().log.category.name, "PassedInCategory")
     }
 
