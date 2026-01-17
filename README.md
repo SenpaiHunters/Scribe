@@ -103,6 +103,25 @@ extension LogCategory {
 
 - Each category maps to its own `Logger` instance under the same subsystem, so Console and Xcode show first-class category filters without extra configuration.
 
+### @Loggable Macro
+
+Automatically generates a `log` property for classes, structs, and enums.
+
+```swift
+@Loggable
+struct TokenManager {
+    func refresh() {
+        log.info("Refreshing token")
+    }
+}
+```
+
+**Options:**
+- `@Loggable` — uses the type name as the category
+- `@Loggable("CustomName")` — uses a custom category name
+- `@Loggable(category: .network)` — uses an existing `LogCategory`
+- `@Loggable(style: .static)` — generates a static `log` property instead of instance
+
 ### LogManager
 
 Core logger with configuration and sinks.
@@ -112,13 +131,18 @@ Core logger with configuration and sinks.
   - `minimumLevel: LogLevel` — threshold (read/write)
   - `configuration: LogConfiguration` — formatting and filtering (read/write)
   - `sinkCount: Int` — number of registered sinks
+  - `loggerCacheCount: Int` — number of cached `Logger` instances
 - **Methods**:
   - `log(_:level:category:file:function:line:)` — core logging method
   - `setMinimumLevel(_:)` — async level setter
+  - `getMinimumLevel(_:)` — async level getter with completion handler
   - `setConfiguration(_:)` — async configuration setter
-  - `addSink(_:) -> SinkID` — register a sink, returns ID for removal
+  - `getConfiguration(_:)` — async configuration getter with completion handler
+  - `addSink(categories:_:) -> LogSubscription` — register a sink with optional category filter, returns ID for removal
   - `removeSink(_:)` — remove a specific sink by ID
   - `removeAllSinks()` — remove all sinks
+  - `stream(categories:) -> AsyncStream<String>` — create an async stream of log messages with optional category filter
+  - `clearLoggerCache(completion:)` — clear cached `Logger` instances
 
 ### LogConfiguration
 
@@ -129,6 +153,7 @@ Configuration struct for customizing log output.
 - `includeTimestamp: Bool` — include timestamps (default: `true`)
 - `includeEmoji: Bool` — include level emoji (default: `true`)
 - `includeShortCode: Bool` — include level short code like `[DBG]` (default: `false`)
+- `includeFileAndLineNumber: Bool` — include source file and line number (default: `true`)
 - `autoLoggerCacheLimit: Int?` — limit cached auto-generated `Logger` instances (e.g., `#fileID`); `nil` means unbounded; default is 100
 - `dateFormat: String` — timestamp format (default: `"yyyy-MM-dd HH:mm:ss.SSSZ"`)
 
@@ -275,8 +300,8 @@ LogManager.shared.clearLoggerCache()
 ```
 
 - Notes:
-  - Auto-generated categories (`#fileID`) are cached in an internal `NSCache` with a default cap of 100.
-  - Custom categories you define (e.g., `LogCategory("APIService")`) are stored in a dictionary and are not evicted.
+  - Auto-generated categories (`#fileID`) are cached with a default limit of 100. When the limit is reached, the least recently used loggers are removed first.
+  - Custom categories you define (e.g., `LogCategory("APIService")`) are cached permanently and not removed.
 
 ### Combined Configuration
 
@@ -329,6 +354,20 @@ LogManager.shared.removeAllSinks()
 let count = LogManager.shared.sinkCount
 ```
 
+### Streaming
+
+For async/await, use `stream()` instead of callbacks:
+
+```swift
+let stream = LogManager.shared.stream()
+
+Task {
+    for await line in stream {
+        print("Log:", line)
+    }
+}
+```
+
 ## Threading and Performance
 
 - Logging occurs on a dedicated utility queue to minimize call-site blocking.
@@ -339,6 +378,7 @@ let count = LogManager.shared.sinkCount
 
 ## Best Practices
 
+- Use the `@Loggable` macro to automatically generate a `log` property for your types.
 - Use categories to group logs by module or feature (e.g., `LogCategory("APIService")`, `LogCategory("Storage")`).
 - Raise `minimumLevel` in production (e.g., `.info` or `.warning`).
 - Avoid logging PII or secrets; this package does not perform encryption or redaction.
@@ -350,14 +390,14 @@ let count = LogManager.shared.sinkCount
 ```swift
 extension LogCategory {
     static let app = LogCategory("App")
-    static let apiService = LogCategory("APIService")
 }
 
+@Loggable
 final class APIService {
     func fetchProfile() {
-        Log.api("GET /v1/profile", category: .apiService)
+        log.api("GET /v1/profile")
         // ... network call ...
-        Log.debug("Decoded Profile(id: 123)", category: .apiService)
+        log.debug("Decoded Profile(id: 123)")
     }
 }
 
@@ -368,7 +408,7 @@ struct MyApp: App {
         LogManager.shared.minimumLevel = .info
         
         let config = LogConfiguration(
-            enabledCategories: [.app, .apiService],
+            enabledCategories: [.app, APIService.logCategory],
             includeTimestamp: true
         )
         LogManager.shared.configuration = config
