@@ -122,6 +122,8 @@ struct LoggableMacro: MemberMacro {
             decl.name.text
         } else if let decl = declaration.as(ClassDeclSyntax.self) {
             decl.name.text
+        } else if let decl = declaration.as(ActorDeclSyntax.self) {
+            decl.name.text
         } else {
             nil
         }
@@ -139,6 +141,8 @@ struct LoggableMacro: MemberMacro {
         } else if let decl = declaration.as(StructDeclSyntax.self) {
             decl.modifiers
         } else if let decl = declaration.as(ClassDeclSyntax.self) {
+            decl.modifiers
+        } else if let decl = declaration.as(ActorDeclSyntax.self) {
             decl.modifiers
         } else {
             nil
